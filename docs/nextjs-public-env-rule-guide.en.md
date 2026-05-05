@@ -144,18 +144,18 @@ Operational classification guideline: if exposure of a value would require rotat
 
 ## Rule Inventory
 
-| Rule ID | Severity | Purpose |
-| --- | --- | --- |
-| `nextjs-public-env.next-config-secret-key` | ERROR | Detects secret-like key names under `next.config.* env`. |
-| `nextjs-public-env.next-config-known-secret-value` | ERROR | Detects values that match known secret formats under `next.config.* env`. |
-| `nextjs-public-env.next-config-spread-process-env` | ERROR | Detects `process.env` or `...process.env` assigned to `env`. |
-| `nextjs-public-env.next-config-process-env-secret-flow` | ERROR | Detects data flow from `process.env.SECRET_LIKE_NAME` into `env`. |
-| `nextjs-public-env.next-config-process-env-alias` | ERROR | Detects aliases of `process.env` assigned to `env`. |
-| `nextjs-public-env.next-config-audit-any-env-entry` | WARNING | Audits every entry under `next.config.* env`. |
-| `nextjs-public-env.next-config-audit-public-env` | WARNING | Audits values that appear public-safe under `next.config.* env`. |
-| `nextjs-public-env.dotenv-next-public-secret-name` | ERROR | Detects `NEXT_PUBLIC_*` variables with secret-like names in `.env*`. |
-| `nextjs-public-env.dotenv-next-public-known-secret-value` | ERROR | Detects `NEXT_PUBLIC_*` variables with known secret-like values in `.env*`. |
-| `nextjs-public-env.dotenv-next-public-audit` | WARNING | Audits remaining `NEXT_PUBLIC_*` variables. |
+| Rule ID | Coverage Area | Severity | Finding Type | Required Action |
+| --- | --- | --- | --- | --- |
+| `nextjs-public-env.next-config-secret-key` | `next.config.* env` | ERROR | Secret-like key name | Remove from client-exposed config; move to server-only environment variables. |
+| `nextjs-public-env.next-config-known-secret-value` | `next.config.* env` | ERROR | Known secret-like value format | Remove from client-exposed config; rotate or revoke if already exposed. |
+| `nextjs-public-env.next-config-spread-process-env` | `next.config.* env` | ERROR | Full `process.env` exposure | Remove `process.env` or `...process.env`; expose only reviewed public values. |
+| `nextjs-public-env.next-config-process-env-secret-flow` | `next.config.* env` | ERROR | Secret-like `process.env` data flow | Keep the source variable server-side and remove it from `env`. |
+| `nextjs-public-env.next-config-process-env-alias` | `next.config.* env` | ERROR | Alias of `process.env` exposed through `env` | Replace the alias with an explicit allowlist of public-safe values. |
+| `nextjs-public-env.next-config-audit-any-env-entry` | `next.config.* env` | WARNING | Any entry exposed through Next.js config | Review necessity; remove if browser exposure is not required. |
+| `nextjs-public-env.next-config-audit-public-env` | `next.config.* env` | WARNING | Public-looking config value | Confirm the value is public-safe or move it server-side. |
+| `nextjs-public-env.dotenv-next-public-secret-name` | `.env*` | ERROR | `NEXT_PUBLIC_*` variable with secret-like name | Remove `NEXT_PUBLIC_`; store as server-only if sensitive. |
+| `nextjs-public-env.dotenv-next-public-known-secret-value` | `.env*` | ERROR | `NEXT_PUBLIC_*` variable with known secret-like value | Move server-side; rotate or revoke if already exposed. |
+| `nextjs-public-env.dotenv-next-public-audit` | `.env*` | WARNING | Remaining `NEXT_PUBLIC_*` variable | Confirm the value is intentionally public and safe for browser exposure. |
 
 ## Rule Details
 

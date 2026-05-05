@@ -145,18 +145,18 @@ Tiêu chí nhận diện thực tế: nếu việc lộ giá trị yêu cầu ro
 
 ## Danh sách rule
 
-| Rule ID | Mức độ | Mục đích |
-| --- | --- | --- |
-| `nextjs-public-env.next-config-secret-key` | ERROR | Phát hiện key có tên giống secret trong `next.config.* env`. |
-| `nextjs-public-env.next-config-known-secret-value` | ERROR | Phát hiện value có format giống secret thật trong `next.config.* env`. |
-| `nextjs-public-env.next-config-spread-process-env` | ERROR | Phát hiện `process.env` hoặc spread `...process.env` được đưa vào `env`. |
-| `nextjs-public-env.next-config-process-env-secret-flow` | ERROR | Phát hiện dữ liệu từ `process.env.SECRET_LIKE_NAME` chảy vào `env`. |
-| `nextjs-public-env.next-config-process-env-alias` | ERROR | Phát hiện alias của `process.env` được đưa vào `env`. |
-| `nextjs-public-env.next-config-audit-any-env-entry` | WARNING | Audit mọi entry nằm trong `next.config.* env`. |
-| `nextjs-public-env.next-config-audit-public-env` | WARNING | Audit giá trị có vẻ public-safe trong `next.config.* env`. |
-| `nextjs-public-env.dotenv-next-public-secret-name` | ERROR | Phát hiện `NEXT_PUBLIC_*` có tên giống secret trong `.env*`. |
-| `nextjs-public-env.dotenv-next-public-known-secret-value` | ERROR | Phát hiện `NEXT_PUBLIC_*` có value giống secret thật trong `.env*`. |
-| `nextjs-public-env.dotenv-next-public-audit` | WARNING | Audit mọi biến `NEXT_PUBLIC_*` còn lại. |
+| Rule ID | Phạm vi | Mức độ | Loại phát hiện | Hành động yêu cầu |
+| --- | --- | --- | --- | --- |
+| `nextjs-public-env.next-config-secret-key` | `next.config.* env` | ERROR | Tên key giống secret | Gỡ khỏi cấu hình có thể public ra client; chuyển sang biến môi trường server-only. |
+| `nextjs-public-env.next-config-known-secret-value` | `next.config.* env` | ERROR | Value có format giống secret thật | Gỡ khỏi cấu hình có thể public ra client; rotate hoặc revoke nếu đã lộ. |
+| `nextjs-public-env.next-config-spread-process-env` | `next.config.* env` | ERROR | Expose toàn bộ `process.env` | Loại bỏ `process.env` hoặc `...process.env`; chỉ expose giá trị public đã review. |
+| `nextjs-public-env.next-config-process-env-secret-flow` | `next.config.* env` | ERROR | Dòng dữ liệu từ `process.env` có tên giống secret | Giữ biến nguồn ở server-side và loại bỏ khỏi `env`. |
+| `nextjs-public-env.next-config-process-env-alias` | `next.config.* env` | ERROR | Alias của `process.env` được expose qua `env` | Thay alias bằng danh sách allowlist các giá trị public-safe. |
+| `nextjs-public-env.next-config-audit-any-env-entry` | `next.config.* env` | WARNING | Mọi entry được expose qua Next.js config | Review nhu cầu sử dụng; loại bỏ nếu không cần xuất hiện ở browser. |
+| `nextjs-public-env.next-config-audit-public-env` | `next.config.* env` | WARNING | Giá trị có vẻ public-safe | Xác nhận public-safe hoặc chuyển sang server-side. |
+| `nextjs-public-env.dotenv-next-public-secret-name` | `.env*` | ERROR | Biến `NEXT_PUBLIC_*` có tên giống secret | Gỡ prefix `NEXT_PUBLIC_`; lưu server-only nếu nhạy cảm. |
+| `nextjs-public-env.dotenv-next-public-known-secret-value` | `.env*` | ERROR | Biến `NEXT_PUBLIC_*` có value giống secret thật | Chuyển server-side; rotate hoặc revoke nếu đã lộ. |
+| `nextjs-public-env.dotenv-next-public-audit` | `.env*` | WARNING | Các biến `NEXT_PUBLIC_*` còn lại | Xác nhận biến được public có chủ đích và an toàn khi xuất hiện ở browser. |
 
 ## Giải thích chi tiết từng nhóm rule
 
