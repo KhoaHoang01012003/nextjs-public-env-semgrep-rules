@@ -1,0 +1,359 @@
+rules:
+  - id: nextjs-public-env.next-config-secret-key
+    languages:
+      - javascript
+      - typescript
+    severity: ERROR
+    message: >-
+      This value is configured under Next.js `env`. Next.js bundles these
+      values into client-side JavaScript, so secret-like keys must not be placed
+      here.
+    metadata:
+      category: security
+      confidence: HIGH
+      technology:
+        - nextjs
+      references:
+        - https://nextjs.org/docs/pages/api-reference/config/next-config-js/env
+    paths:
+      include:
+        - "**/next.config.js"
+        - "**/next.config.cjs"
+        - "**/next.config.mjs"
+        - "**/next.config.ts"
+        - "/rules/nextjs-public-env-exposure.js"
+        - "/rules/nextjs-public-env-exposure.ts"
+    patterns:
+      - pattern-either:
+          - patterns:
+              - pattern-inside: |
+                  module.exports = { env: { ... } }
+              - pattern: "$KEY: $VALUE"
+          - patterns:
+              - pattern-inside: |
+                  export default { env: { ... } }
+              - pattern: "$KEY: $VALUE"
+          - patterns:
+              - pattern-inside: |
+                  const $CONFIG = { env: { ... } };
+                  ...
+                  export default $CONFIG;
+              - pattern: "$KEY: $VALUE"
+          - patterns:
+              - pattern-inside: |
+                  const $CONFIG = { env: { ... } };
+                  ...
+                  module.exports = $CONFIG;
+              - pattern: "$KEY: $VALUE"
+      - metavariable-regex:
+          metavariable: $KEY
+          regex: (?i).*(SECRET|TOKEN|PASSWORD|PASSWD|PRIVATE|JWT|AUTH|SESSION|COOKIE|CREDENTIAL|DATABASE|DB_|API[_-]?KEY|ACCESS[_-]?KEY|CLIENT[_-]?SECRET|SIGNING[_-]?KEY|WEBHOOK[_-]?SECRET).*
+
+  - id: nextjs-public-env.next-config-spread-process-env
+    languages:
+      - javascript
+      - typescript
+    severity: ERROR
+    message: >-
+      Do not expose `process.env` through Next.js `env`. This can bundle many
+      server-side variables into client-side JavaScript.
+    metadata:
+      category: security
+      confidence: HIGH
+      technology:
+        - nextjs
+      references:
+        - https://nextjs.org/docs/pages/api-reference/config/next-config-js/env
+    paths:
+      include:
+        - "**/next.config.js"
+        - "**/next.config.cjs"
+        - "**/next.config.mjs"
+        - "**/next.config.ts"
+        - "/rules/nextjs-public-env-exposure.js"
+        - "/rules/nextjs-public-env-exposure.ts"
+    pattern-either:
+      - pattern: |
+          module.exports = { env: { ...process.env } }
+      - pattern: |
+          export default { env: { ...process.env } }
+      - pattern: |
+          module.exports = { env: process.env }
+      - pattern: |
+          export default { env: process.env }
+
+  - id: nextjs-public-env.next-config-known-secret-value
+    languages:
+      - javascript
+      - typescript
+    severity: ERROR
+    message: >-
+      This Next.js public `env` value looks like a real provider secret or
+      private key. Move it to server-only environment variables and rotate it if
+      it has already been exposed.
+    metadata:
+      category: security
+      confidence: HIGH
+      technology:
+        - nextjs
+      references:
+        - https://nextjs.org/docs/pages/api-reference/config/next-config-js/env
+    paths:
+      include:
+        - "**/next.config.js"
+        - "**/next.config.cjs"
+        - "**/next.config.mjs"
+        - "**/next.config.ts"
+        - "/rules/nextjs-public-env-exposure.js"
+        - "/rules/nextjs-public-env-exposure.ts"
+    patterns:
+      - pattern-either:
+          - patterns:
+              - pattern-inside: |
+                  module.exports = { env: { ... } }
+              - pattern: '$KEY: "$VALUE"'
+          - patterns:
+              - pattern-inside: |
+                  export default { env: { ... } }
+              - pattern: '$KEY: "$VALUE"'
+          - patterns:
+              - pattern-inside: |
+                  const $CONFIG = { env: { ... } };
+                  ...
+                  export default $CONFIG;
+              - pattern: '$KEY: "$VALUE"'
+      - metavariable-regex:
+          metavariable: $VALUE
+          regex: (?i).*(sk_live_|rk_live_|ghp_|github_pat_|glpat-|xox[baprs]-|AKIA[0-9A-Z]{16}|AIza[0-9A-Za-z_-]{20,}|-----BEGIN [A-Z ]*PRIVATE KEY-----).*
+
+  - id: nextjs-public-env.next-config-process-env-secret-flow
+    mode: taint
+    languages:
+      - javascript
+      - typescript
+    severity: ERROR
+    message: >-
+      A secret-like `process.env` value flows into Next.js `env`, which is
+      bundled into client-side JavaScript.
+    metadata:
+      category: security
+      confidence: MEDIUM
+      technology:
+        - nextjs
+      references:
+        - https://nextjs.org/docs/pages/api-reference/config/next-config-js/env
+    paths:
+      include:
+        - "**/next.config.js"
+        - "**/next.config.cjs"
+        - "**/next.config.mjs"
+        - "**/next.config.ts"
+        - "/rules/nextjs-public-env-exposure.js"
+        - "/rules/nextjs-public-env-exposure.ts"
+    pattern-sources:
+      - patterns:
+          - pattern-either:
+              - pattern: process.env.$ENV
+              - pattern: process.env["$ENV"]
+              - pattern: process.env['$ENV']
+          - metavariable-regex:
+              metavariable: $ENV
+              regex: (?i).*(SECRET|TOKEN|PASSWORD|PASSWD|PRIVATE|JWT|AUTH|SESSION|COOKIE|CREDENTIAL|DATABASE|DB_|API[_-]?KEY|ACCESS[_-]?KEY|CLIENT[_-]?SECRET|SIGNING[_-]?KEY|WEBHOOK[_-]?SECRET).*
+    pattern-sinks:
+      - patterns:
+          - pattern-either:
+              - pattern-inside: |
+                  module.exports = { env: { ... } }
+              - pattern-inside: |
+                  export default { env: { ... } }
+          - pattern: $SINK
+
+  - id: nextjs-public-env.next-config-process-env-alias
+    languages:
+      - javascript
+      - typescript
+    severity: ERROR
+    message: >-
+      A variable alias for `process.env` is assigned to Next.js `env`. This can
+      expose server-only variables to the browser bundle.
+    metadata:
+      category: security
+      confidence: HIGH
+      technology:
+        - nextjs
+      references:
+        - https://nextjs.org/docs/pages/api-reference/config/next-config-js/env
+    paths:
+      include:
+        - "**/next.config.js"
+        - "**/next.config.cjs"
+        - "**/next.config.mjs"
+        - "**/next.config.ts"
+        - "/rules/nextjs-public-env-exposure.js"
+        - "/rules/nextjs-public-env-exposure.ts"
+    patterns:
+      - pattern: |
+          const $ENV = process.env;
+          ...
+      - pattern-either:
+          - pattern: |
+              export default { env: $ENV }
+          - pattern: |
+              module.exports = { env: $ENV }
+
+  - id: nextjs-public-env.next-config-audit-any-env-entry
+    languages:
+      - javascript
+      - typescript
+    severity: WARNING
+    message: >-
+      This value is defined inside Next.js `env`, so it can be bundled into
+      client-side JavaScript. Remove it if possible, or confirm it is safe for
+      any user to view.
+    metadata:
+      category: security
+      confidence: MEDIUM
+      technology:
+        - nextjs
+      references:
+        - https://nextjs.org/docs/pages/api-reference/config/next-config-js/env
+    paths:
+      include:
+        - "**/next.config.js"
+        - "**/next.config.cjs"
+        - "**/next.config.mjs"
+        - "**/next.config.ts"
+        - "/rules/nextjs-public-env-exposure.js"
+        - "/rules/nextjs-public-env-exposure.ts"
+    patterns:
+      - pattern-either:
+          - patterns:
+              - pattern-inside: |
+                  module.exports = { ..., env: { ..., $KEY: $VALUE, ... }, ... }
+              - pattern: "$KEY: $VALUE"
+          - patterns:
+              - pattern-inside: |
+                  export default { ..., env: { ..., $KEY: $VALUE, ... }, ... }
+              - pattern: "$KEY: $VALUE"
+          - patterns:
+              - pattern-inside: |
+                  const $CONFIG = { ..., env: { ..., $KEY: $VALUE, ... }, ... };
+                  ...
+                  export default $CONFIG;
+              - pattern: "$KEY: $VALUE"
+          - patterns:
+              - pattern-inside: |
+                  const $CONFIG = { ..., env: { ..., $KEY: $VALUE, ... }, ... };
+                  ...
+                  module.exports = $CONFIG;
+              - pattern: "$KEY: $VALUE"
+      - metavariable-regex:
+          metavariable: $KEY
+          regex: (?i)^(?!env$).+
+
+  - id: nextjs-public-env.next-config-audit-public-env
+    languages:
+      - javascript
+      - typescript
+    severity: WARNING
+    message: >-
+      This value is configured under Next.js `env`, so it is bundled into
+      client-side JavaScript. Confirm this value is safe for any user to view.
+    metadata:
+      category: security
+      confidence: MEDIUM
+      technology:
+        - nextjs
+      references:
+        - https://nextjs.org/docs/pages/api-reference/config/next-config-js/env
+    paths:
+      include:
+        - "**/next.config.js"
+        - "**/next.config.cjs"
+        - "**/next.config.mjs"
+        - "**/next.config.ts"
+        - "/rules/nextjs-public-env-exposure.js"
+        - "/rules/nextjs-public-env-exposure.ts"
+    patterns:
+      - pattern-either:
+          - patterns:
+              - pattern-inside: |
+                  module.exports = { env: { ... } }
+              - pattern: '$KEY: "$VALUE"'
+          - patterns:
+              - pattern-inside: |
+                  export default { env: { ... } }
+              - pattern: '$KEY: "$VALUE"'
+      - metavariable-regex:
+          metavariable: $KEY
+          regex: (?i)^(NEXT_PUBLIC_|PUBLIC_|APP_|FEATURE_).*
+      - metavariable-regex:
+          metavariable: $KEY
+          regex: (?i)^(?!(.*(SECRET|TOKEN|PASSWORD|PASSWD|PRIVATE|JWT|AUTH|SESSION|COOKIE|CREDENTIAL|DATABASE|DB_|API[_-]?KEY|ACCESS[_-]?KEY|CLIENT[_-]?SECRET|SIGNING[_-]?KEY|WEBHOOK[_-]?SECRET))).*
+      - metavariable-regex:
+          metavariable: $VALUE
+          regex: (?i)^(?!(.*(sk_live_|rk_live_|ghp_|github_pat_|glpat-|xox[baprs]-|AKIA[0-9A-Z]{16}|AIza[0-9A-Za-z_-]{20,}|-----BEGIN [A-Z ]*PRIVATE KEY-----))).*
+
+  - id: nextjs-public-env.dotenv-next-public-secret-name
+    languages:
+      - generic
+    severity: ERROR
+    message: >-
+      `NEXT_PUBLIC_*` variables are bundled into client-side JavaScript by
+      Next.js. This variable name looks secret-like and should be server-only.
+    metadata:
+      category: security
+      confidence: HIGH
+      technology:
+        - nextjs
+      references:
+        - https://nextjs.org/docs/pages/guides/environment-variables
+    paths:
+      include:
+        - "**/.env"
+        - "**/.env.*"
+        - "/rules/nextjs-public-env-exposure.generic"
+    pattern-regex: (?im)^\s*NEXT_PUBLIC_[A-Z0-9_]*(SECRET|TOKEN|PASSWORD|PASSWD|PRIVATE|JWT|AUTH|SESSION|COOKIE|CREDENTIAL|DATABASE|DB_|API[_-]?KEY|ACCESS[_-]?KEY|CLIENT[_-]?SECRET|SIGNING[_-]?KEY|WEBHOOK[_-]?SECRET)[A-Z0-9_]*\s*=
+
+  - id: nextjs-public-env.dotenv-next-public-known-secret-value
+    languages:
+      - generic
+    severity: ERROR
+    message: >-
+      This `NEXT_PUBLIC_*` value looks like a real provider secret. Next.js will
+      expose it to browser JavaScript; move it server-side and rotate it if it
+      has already shipped.
+    metadata:
+      category: security
+      confidence: HIGH
+      technology:
+        - nextjs
+      references:
+        - https://nextjs.org/docs/pages/guides/environment-variables
+    paths:
+      include:
+        - "**/.env"
+        - "**/.env.*"
+        - "/rules/nextjs-public-env-exposure.generic"
+    pattern-regex: (?im)^\s*NEXT_PUBLIC_[A-Z0-9_]+\s*=\s*['"]?(sk_live_|rk_live_|ghp_|github_pat_|glpat-|xox[baprs]-|AKIA[0-9A-Z]{16}|AIza[0-9A-Za-z_-]{20,}|-----BEGIN [A-Z ]*PRIVATE KEY-----)
+
+  - id: nextjs-public-env.dotenv-next-public-audit
+    languages:
+      - generic
+    severity: WARNING
+    message: >-
+      `NEXT_PUBLIC_*` is intentionally public in Next.js. Confirm this value is
+      safe for any user to view in browser JavaScript.
+    metadata:
+      category: security
+      confidence: MEDIUM
+      technology:
+        - nextjs
+      references:
+        - https://nextjs.org/docs/pages/guides/environment-variables
+    paths:
+      include:
+        - "**/.env"
+        - "**/.env.*"
+        - "/rules/nextjs-public-env-exposure.generic"
+    pattern-regex: (?im)^\s*NEXT_PUBLIC_(?!(?:[A-Z0-9_]*(?:SECRET|TOKEN|PASSWORD|PASSWD|PRIVATE|JWT|AUTH|SESSION|COOKIE|CREDENTIAL|DATABASE|DB_|API[_-]?KEY|ACCESS[_-]?KEY|CLIENT[_-]?SECRET|SIGNING[_-]?KEY|WEBHOOK[_-]?SECRET)[A-Z0-9_]*\s*=))[A-Z0-9_]+\s*=\s*(?!(?:['"]?(?:sk_live_|rk_live_|ghp_|github_pat_|glpat-|xox[baprs]-|AKIA[0-9A-Z]{16}|AIza[0-9A-Za-z_-]{20,}|-----BEGIN [A-Z ]*PRIVATE KEY-----))).+

@@ -1,0 +1,23 @@
+// ruleid: nextjs-public-env.dotenv-next-public-secret-name
+NEXT_PUBLIC_JWT_SECRET=abc123
+
+// ruleid: nextjs-public-env.dotenv-next-public-known-secret-value
+NEXT_PUBLIC_STRIPE_BROWSER_KEY=sk_live_FAKE
+
+// ruleid: nextjs-public-env.dotenv-next-public-known-secret-value
+NEXT_PUBLIC_GITHUB_VALUE=ghp_FAKE
+
+// ruleid: nextjs-public-env.dotenv-next-public-audit
+NEXT_PUBLIC_APP_URL="https://example.com"
+
+// ruleid: nextjs-public-env.dotenv-next-public-audit
+NEXT_PUBLIC_FEATURE_FLAG=enabled
+
+// ok: nextjs-public-env.dotenv-next-public-secret-name
+SERVER_ONLY_JWT_SECRET=abc123
+
+// ok: nextjs-public-env.dotenv-next-public-audit
+DATABASE_URL="postgres://user:password@example.com/db"
+
+// ok: nextjs-public-env.dotenv-next-public-known-secret-value
+STRIPE_SECRET_KEY=sk_live_FAKE

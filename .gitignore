@@ -1,0 +1,9 @@
+.venv/
+__pycache__/
+*.pyc
+.semgrep/
+
+# Avoid accidentally publishing real local environment files.
+.env
+.env.*
+!sample-next-app/.env.local
