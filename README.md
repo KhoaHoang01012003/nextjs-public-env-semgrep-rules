@@ -40,7 +40,8 @@ Scan một project Next.js thật:
 
 ## Đọc hướng dẫn cho dev
 
-Xem `docs/nextjs-public-env-rule-guide.md`.
+- Tiếng Việt: `docs/nextjs-public-env-rule-guide.md`
+- English: `docs/nextjs-public-env-rule-guide.en.md`
 
 ## Rule IDs
 
